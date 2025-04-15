@@ -12,7 +12,7 @@ app.config['SECRET_KEY'] = 'CS160Project'
 
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'log'
+login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
