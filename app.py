@@ -392,22 +392,27 @@ def update_product(product_id):
         return jsonify({"error": str(e)}), 400
 
 
-# Delete a product
-@app.route('/products/<product_id>', methods=['DELETE'])
+@app.route('/products/<product_id>', methods=['POST', 'DELETE'])
 @login_required
 def delete_product(product_id):
-    try:
-        # Check if the product belongs to the current user
-        product = products_collection.find_one({"_id": ObjectId(product_id)})
-        if product and 'user_id' in product and product['user_id'] != current_user.id:
-            return jsonify({"message": "You don't have permission to delete this product"}), 403
+    if request.method == 'POST':
+        method_override = request.form.get('_method')
+        if method_override and method_override.upper() == 'DELETE':
+            try:
+                # Check if the product belongs to the current user
+                product = products_collection.find_one({"_id": ObjectId(product_id)})
+                if product and 'user_id' in product and product['user_id'] != current_user.id:
+                    return jsonify({"message": "You don't have permission to delete this product"}), 403
 
-        result = products_collection.delete_one({"_id": ObjectId(product_id)})
-        if result.deleted_count > 0:
-            return jsonify({"message": "Product deleted successfully"}), 200
-        return jsonify({"message": "Product not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+                result = products_collection.delete_one({"_id": ObjectId(product_id)})
+                if result.deleted_count > 0:
+                    flash('Product updated successfully!', 'success')
+                    return redirect(url_for('dashboard'))
+                return jsonify({"message": "Product not found"}), 404
+            except Exception as e:
+                return jsonify({"error": str(e)}), 400
+        return None
+    return None
 
 
 # Run the app
