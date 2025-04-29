@@ -16,6 +16,7 @@ bcrypt = Bcrypt(app)
 client = MongoClient("mongodb+srv://Rex:abcd123@cluster0.7xpphgj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["user_auth"]
 users_collection = db["users"]
+products_collection = db["products"]
 
 # Flask-Login setup
 login_manager = LoginManager()
