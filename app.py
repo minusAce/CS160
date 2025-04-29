@@ -23,7 +23,8 @@ os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 bcrypt = Bcrypt(app)
 
 # Connect to MongoDB
-client = MongoClient("mongodb+srv://Rex:abcd123@cluster0.7xpphgj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+client = MongoClient(
+    "mongodb+srv://Rex:abcd123@cluster0.7xpphgj.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["user_auth"]
 users_collection = db["users"]
 products_collection = db["products"]  # Added products collection
@@ -32,6 +33,7 @@ products_collection = db["products"]  # Added products collection
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
+
 
 # User class
 class User(UserMixin):
@@ -54,9 +56,11 @@ class User(UserMixin):
             return User(user_data)
         return None
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.get_by_id(user_id)
+
 
 # Forms
 class RegisterForm(FlaskForm):
@@ -70,12 +74,14 @@ class RegisterForm(FlaskForm):
         if users_collection.find_one({"username": username.data}):
             raise ValidationError("That username already exists. Please choose a different one.")
 
+
 class LoginForm(FlaskForm):
     username = StringField(validators=[InputRequired(), Length(min=4, max=20)],
                            render_kw={"placeholder": "Username"})
     password = PasswordField(validators=[InputRequired(), Length(min=4, max=20)],
                              render_kw={"placeholder": "Password"})
     submit = SubmitField("Login")
+
 
 class ProductForm(FlaskForm):
     title = StringField('Product Title', validators=[InputRequired(), Length(max=120)])
@@ -93,9 +99,11 @@ class ProductForm(FlaskForm):
     careInstructions = TextAreaField('Care Instructions', validators=[Optional()])
     submit = SubmitField('Add Product')
 
+
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
 
 def save_image(file):
     if file and allowed_file(file.filename):
@@ -108,10 +116,12 @@ def save_image(file):
         return f"/uploads/{unique_filename}"
     return None
 
+
 # Routes
 @app.route('/')
 def home():
     return render_template('home.html')
+
 
 @app.route('/dashboard')
 @login_required
@@ -122,6 +132,7 @@ def dashboard():
         product['id'] = str(product['_id'])
     return render_template('dashboard.html', name=current_user.username, products=products)
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     form = LoginForm()
@@ -131,6 +142,7 @@ def login():
             login_user(user)
             return redirect(url_for('dashboard'))
     return render_template('login.html', form=form)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -144,11 +156,13 @@ def register():
         return redirect(url_for('login'))
     return render_template('register.html', form=form)
 
+
 @app.route('/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
 
 # Product form routes
 @app.route('/productForm', methods=['GET', 'POST'])
@@ -188,6 +202,7 @@ def add_product_form():
         return redirect(url_for('dashboard'))
 
     return render_template('add_product.html', form=form)
+
 
 @app.route('/products/<product_id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -256,6 +271,7 @@ def edit_product(product_id):
 
     return render_template('edit_product.html', form=form, product=product)
 
+
 # Products API endpoints
 @app.route('/products', methods=['POST'])
 @login_required
@@ -285,6 +301,7 @@ def add_product():
         'id': str(result.inserted_id)
     }), 201
 
+
 @app.route('/products', methods=['GET'])
 def get_products():
     products = products_collection.find()
@@ -307,6 +324,7 @@ def get_products():
         }
         product_list.append(product_data)
     return jsonify(product_list), 200
+
 
 # Get a specific product by ID
 @app.route('/products/<product_id>', methods=['GET'])
@@ -333,6 +351,7 @@ def get_product(product_id):
         return jsonify({"message": "Product not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 # Update a product
 @app.route('/products/<product_id>', methods=['PUT'])
@@ -372,6 +391,7 @@ def update_product(product_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
+
 # Delete a product
 @app.route('/products/<product_id>', methods=['DELETE'])
 @login_required
@@ -388,6 +408,7 @@ def delete_product(product_id):
         return jsonify({"message": "Product not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 400
+
 
 # Run the app
 if __name__ == '__main__':
