@@ -433,24 +433,35 @@ def delete_product(product_id):
     return None
 
 
-@app.route('/send_message', methods=['POST'])
+@app.route('/chat')
 @login_required
-def send_message():
-    content = request.form.get('content')
-    if content:
-        messages_collection.insert_one({
-            'sender': current_user.username,
-            'content': content,
-            'timestamp': datetime.utcnow()
-        })
-    return redirect(url_for('chat'))
+def user_list():
+    users = list(users_collection.find(
+        {"username": {"$ne": current_user.username}}))
+    return render_template('users.html', users=users)
 
 
-@app.route('/chat', methods=['GET'])
+@app.route('/chat/<receiver>', methods=['GET', 'POST'])
 @login_required
-def chat():
-    messages = list(messages_collection.find().sort('timestamp', 1))
-    return render_template('chat.html', messages=messages)
+def chat(receiver):
+    if request.method == 'POST':
+        content = request.form.get('content')
+        if content:
+            messages_collection.insert_one({
+                'sender': current_user.username,
+                'receiver': receiver,
+                'content': content,
+                'timestamp': datetime.utcnow()
+            })
+
+    messages = list(messages_collection.find({
+        '$or': [
+            {'sender': current_user.username, 'receiver': receiver},
+            {'sender': receiver, 'receiver': current_user.username}
+        ]
+    }).sort('timestamp', 1))
+
+    return render_template('chat.html', receiver=receiver, messages=messages)
 
 
 # Run the app

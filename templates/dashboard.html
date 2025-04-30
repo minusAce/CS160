@@ -12,7 +12,7 @@
     <h2>Your Products</h2>
     <a href="{{ url_for('add_product_form') }}">Add New Product</a>
     <h2>Chat</h2>
-    <a href="{{ url_for('chat') }}">Go to Chat</a>
+    <a href="{{ url_for('user_list') }}">Go to Chat</a>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
