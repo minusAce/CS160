@@ -1,14 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8">
-		<meta http-equiv="X-UA-Compatible" content="IE-edge">
-		<meta name="viewport" content="width=device-width, initial-scale">
-		<title>Dashboard</title>
-	</head>
-	<body>
-		<h1>Dashboard</h1>
-		<a href="{{url_for('login')}}">Login to your Account</a><br>
-		<a href="{{url_for('register')}}">Create an Account</a>
-	</body>
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, {{ name }}!</h1>
+    <a href="{{ url_for('logout') }}">Logout</a>
+    <h2>Your Products</h2>
+    <a href="{{ url_for('add_product_form') }}">Add New Product</a>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul>
+            {% for category, message in messages %}
+                <li><strong>{{ category.capitalize() }}:</strong> {{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    {% for product in products %}
+        <div style="border: 1px solid #ccc; padding: 10px; margin: 10px;">
+            <h3>{{ product.title }} - ${{ product.price }}</h3>
+            {% if product.image_url %}
+                <img src="{{ product.image_url }}" alt="Product Image" width="150">
+            {% endif %}
+            <p>{{ product.description }}</p>
+            <a href="{{ url_for('edit_product', product_id=product.id) }}">Edit</a>
+            <form action="{{ url_for('delete_product', product_id=product.id) }}" method="post" style="display:inline;">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" onclick="return confirm('Are you sure?')">Delete</button>
+            </form>
+        </div>
+    {% endfor %}
+</body>
 </html>

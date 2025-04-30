@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Product</title>
+</head>
+<body>
+    <h1>Edit Product</h1>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+    <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        {{ form.title.label }} {{ form.title(size=50) }}<br>
+        {{ form.price.label }} {{ form.price() }}<br>
+        {{ form.image.label }} {{ form.image() }}<br>
+        {{ form.imageUrl.label }} {{ form.imageUrl(size=50) }}<br>
+        {{ form.description.label }} {{ form.description(rows=3, cols=50) }}<br>
+        {{ form.materialsUsed.label }} {{ form.materialsUsed(size=50) }}<br>
+        {{ form.ingredients.label }} {{ form.ingredients(size=50) }}<br>
+        {{ form.origin.label }} {{ form.origin(size=50) }}<br>
+        {{ form.certifications.label }} {{ form.certifications(size=50) }}<br>
+        {{ form.packaging.label }} {{ form.packaging(size=50) }}<br>
+        {{ form.earthFriendlyFeatures.label }} {{ form.earthFriendlyFeatures(size=50) }}<br>
+        {{ form.sellerMessage.label }} {{ form.sellerMessage(rows=3, cols=50) }}<br>
+        {{ form.careInstructions.label }} {{ form.careInstructions(rows=3, cols=50) }}<br>
+        {{ form.submit() }}
+    </form>
+</body>
+</html>
