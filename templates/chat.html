@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Chat</title>
+</head>
+
+<body>
+    <h1>Chat Room</h1>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+
+    <h2>Messages</h2>
+    <div>
+        {% for msg in messages %}
+        <p><strong>{{ msg.sender }}</strong> ({{ msg.timestamp.strftime('%Y-%m-%d %H:%M') }}): {{ msg.content }}</p>
+        {% endfor %}
+    </div>
+
+    <form action="{{ url_for('send_message') }}" method="POST">
+        <textarea name="content" rows="2" cols="60" placeholder="Type your message here..." required></textarea><br>
+        <button type="submit">Send</button>
+    </form>
+</body>
+
+</html>

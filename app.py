@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 from pymongo import MongoClient
 from wtforms import StringField, PasswordField, SubmitField, FloatField, TextAreaField
 from wtforms.validators import InputRequired, Length, ValidationError, Optional, NumberRange
+from datetime import datetime
 import os
 import uuid
 
@@ -28,6 +29,8 @@ client = MongoClient(
 db = client["user_auth"]
 users_collection = db["users"]
 products_collection = db["products"]  # Added products collection
+messages_collection = db["messages"]
+
 
 # Flask-Login setup
 login_manager = LoginManager()
@@ -72,7 +75,8 @@ class RegisterForm(FlaskForm):
 
     def validate_username(self, username):
         if users_collection.find_one({"username": username.data}):
-            raise ValidationError("That username already exists. Please choose a different one.")
+            raise ValidationError(
+                "That username already exists. Please choose a different one.")
 
 
 class LoginForm(FlaskForm):
@@ -84,19 +88,28 @@ class LoginForm(FlaskForm):
 
 
 class ProductForm(FlaskForm):
-    title = StringField('Product Title', validators=[InputRequired(), Length(max=120)])
-    price = FloatField('Price', validators=[InputRequired(), NumberRange(min=0)])
+    title = StringField('Product Title', validators=[
+                        InputRequired(), Length(max=120)])
+    price = FloatField('Price', validators=[
+                       InputRequired(), NumberRange(min=0)])
     image = FileField('Product Image', validators=[Optional()])
-    imageUrl = StringField('Image URL', validators=[Optional(), Length(max=255)])
+    imageUrl = StringField('Image URL', validators=[
+                           Optional(), Length(max=255)])
     description = TextAreaField('Description', validators=[Optional()])
-    materialsUsed = StringField('Materials Used', validators=[Optional(), Length(max=255)])
-    ingredients = StringField('Ingredients', validators=[Optional(), Length(max=255)])
+    materialsUsed = StringField('Materials Used', validators=[
+                                Optional(), Length(max=255)])
+    ingredients = StringField('Ingredients', validators=[
+                              Optional(), Length(max=255)])
     origin = StringField('Origin', validators=[Optional(), Length(max=120)])
-    certifications = StringField('Certifications', validators=[Optional(), Length(max=255)])
-    packaging = StringField('Packaging', validators=[Optional(), Length(max=255)])
-    earthFriendlyFeatures = StringField('Earth-Friendly Features', validators=[Optional(), Length(max=255)])
+    certifications = StringField('Certifications', validators=[
+                                 Optional(), Length(max=255)])
+    packaging = StringField('Packaging', validators=[
+                            Optional(), Length(max=255)])
+    earthFriendlyFeatures = StringField(
+        'Earth-Friendly Features', validators=[Optional(), Length(max=255)])
     sellerMessage = TextAreaField('Seller Message', validators=[Optional()])
-    careInstructions = TextAreaField('Care Instructions', validators=[Optional()])
+    careInstructions = TextAreaField(
+        'Care Instructions', validators=[Optional()])
     submit = SubmitField('Add Product')
 
 
@@ -126,11 +139,12 @@ def home():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Fetch products to display in dashboard
     products = list(products_collection.find())
     for product in products:
         product['id'] = str(product['_id'])
-    return render_template('dashboard.html', name=current_user.username, products=products)
+
+    messages = list(messages_collection.find().sort('timestamp', -1).limit(10))
+    return render_template('dashboard.html', name=current_user.username, products=products, messages=messages)
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -148,7 +162,8 @@ def login():
 def register():
     form = RegisterForm()
     if form.validate_on_submit():
-        hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        hashed_password = bcrypt.generate_password_hash(
+            form.password.data).decode('utf-8')
         users_collection.insert_one({
             "username": form.username.data,
             "password": hashed_password
@@ -232,7 +247,8 @@ def edit_product(product_id):
         form.origin.data = product.get('origin', '')
         form.certifications.data = product.get('certifications', '')
         form.packaging.data = product.get('packaging', '')
-        form.earthFriendlyFeatures.data = product.get('earth_friendly_features', '')
+        form.earthFriendlyFeatures.data = product.get(
+            'earth_friendly_features', '')
         form.sellerMessage.data = product.get('seller_message', '')
         form.careInstructions.data = product.get('care_instructions', '')
 
@@ -400,11 +416,13 @@ def delete_product(product_id):
         if method_override and method_override.upper() == 'DELETE':
             try:
                 # Check if the product belongs to the current user
-                product = products_collection.find_one({"_id": ObjectId(product_id)})
+                product = products_collection.find_one(
+                    {"_id": ObjectId(product_id)})
                 if product and 'user_id' in product and product['user_id'] != current_user.id:
                     return jsonify({"message": "You don't have permission to delete this product"}), 403
 
-                result = products_collection.delete_one({"_id": ObjectId(product_id)})
+                result = products_collection.delete_one(
+                    {"_id": ObjectId(product_id)})
                 if result.deleted_count > 0:
                     flash('Product updated successfully!', 'success')
                     return redirect(url_for('dashboard'))
@@ -413,6 +431,26 @@ def delete_product(product_id):
                 return jsonify({"error": str(e)}), 400
         return None
     return None
+
+
+@app.route('/send_message', methods=['POST'])
+@login_required
+def send_message():
+    content = request.form.get('content')
+    if content:
+        messages_collection.insert_one({
+            'sender': current_user.username,
+            'content': content,
+            'timestamp': datetime.utcnow()
+        })
+    return redirect(url_for('chat'))
+
+
+@app.route('/chat', methods=['GET'])
+@login_required
+def chat():
+    messages = list(messages_collection.find().sort('timestamp', 1))
+    return render_template('chat.html', messages=messages)
 
 
 # Run the app
